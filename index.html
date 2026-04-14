@@ -4,39 +4,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FP Masterclass: Senior Architect Mode</title>
+    <title>Expert Talk: Senior Engineering Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chosen Palette: Warm Neutrals (Stone/Alabaster background, Terracotta/Orange accents, Charcoal text) -->
-    <!-- Application Structure Plan: The SPA uses a "Course Dashboard" layout. The sidebar serves as a syllabus timeline, allowing users to navigate between the 6 core pillars non-linearly. The main content area dynamically updates to present the selected pillar's theory, relatable analogy, interactive "Junior vs. Senior" code comparison, and interview scripting. -->
-    <!-- Visualization & Content Choices: Cognitive Load Comparison -> Compare -> Bar Chart (Chart.js) -> Updates on pillar change -> Visually reinforces why FP is cleaner than imperative code -> Chart.js. Both visualizations avoid SVG and Mermaid as requested. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <!-- Plugin for labels on top of bars -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <!-- Prism Syntax Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            --stone-50: #fafaf9;
+            --stone-100: #f5f5f4;
+            --stone-200: #e7e5e4;
+            --stone-300: #d6d3d1;
+            --stone-800: #292524;
+            --stone-900: #1c1917;
+            --orange-600: #ea580c;
+            --emerald-500: #10b981;
+            --rose-500: #f43f5e;
+        }
+
         body {
-            background-color: #fafaf9;
-            color: #1c1917;
-            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--stone-50);
+            color: var(--stone-900);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            scroll-behavior: smooth;
         }
 
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 250px;
-            max-height: 300px;
+            height: 240px;
         }
 
-        .code-block {
-            font-family: monospace;
-            white-space: pre-wrap;
-            overflow-x: auto;
+        pre[class*="language-"] {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            font-family: 'Fira Code', monospace !important;
+            font-size: 14px !important;
+        }
+
+        code[class*="language-"] {
+            font-family: 'Fira Code', monospace !important;
         }
 
         .active-nav {
             background-color: #ffedd5;
-            border-left: 4px solid #ea580c;
+            border-left: 4px solid var(--orange-600);
             color: #9a3412;
             font-weight: 600;
         }
@@ -47,148 +67,268 @@
         }
 
         .inactive-nav:hover {
-            background-color: #f5f5f4;
+            background-color: var(--stone-100);
         }
 
         .glass-panel {
             background: white;
-            border: 1px solid #e7e5e4;
+            border: 1px solid var(--stone-200);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .hide {
-            display: none;
-        }
-
-        /* Q&A Overlay Styles */
+        /* Improved Q&A Overlay Styles */
         #qna-overlay {
             display: none;
             background-color: #0c0a09;
-            /* Stone 950 */
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(234, 88, 12, 0.1) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
             z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .qna-text {
-            font-size: 25vw;
+            font-size: 20vw;
             line-height: 1;
-            letter-spacing: -0.05em;
+            letter-spacing: -0.06em;
+            background: linear-gradient(to bottom, #ea580c, #9a3412);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 30px rgba(234, 88, 12, 0.4));
+        }
+
+        .complexity-btn.active {
+            background-color: var(--stone-800);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .view-btn.active {
+            background-color: white;
+            color: var(--stone-900);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-content {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .hide { display: none; }
+        
+        .code-header {
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .chart-bg {
+            background-image: radial-gradient(var(--stone-200) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .senior-brief-box {
+            background: linear-gradient(to right, var(--stone-900), #444);
+            color: white;
+            border-radius: 1rem;
+            position: relative;
+            overflow: hidden;
         }
     </style>
 </head>
 
 <body class="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
-    <!-- Q&A Full Screen Overlay -->
+    <!-- Premium Q&A Overlay -->
     <div id="qna-overlay" class="fixed inset-0 flex flex-col items-center justify-center p-8">
-        <button onclick="hideQnAScreen()"
-            class="absolute top-8 right-8 text-stone-500 hover:text-stone-300 font-mono text-sm tracking-widest uppercase flex items-center gap-2">
-            <span>✕</span> Close
+        <button onclick="hideQnAScreen()" 
+            class="absolute top-12 right-12 group flex items-center gap-3 text-stone-500 hover:text-orange-500 transition-all duration-300">
+            <span class="text-[10px] font-black uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all">Close Deck</span>
+            <div class="w-10 h-10 rounded-full border border-stone-800 flex items-center justify-center group-hover:border-orange-500 group-hover:rotate-90 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </div>
         </button>
-        <div class="flex flex-col items-center justify-center animate-pulse">
-            <h1 class="qna-text font-black text-orange-600 text-center tracking-tighter">
-                Q&A
-            </h1>
-            <div class="h-2 w-32 bg-stone-800 rounded-full mt-4"></div>
+
+        <div class="flex flex-col items-center max-w-4xl text-center">
+            <div class="mb-6 flex items-center gap-4 animate-bounce">
+                <div class="h-[1px] w-12 bg-orange-600/50"></div>
+                <span class="text-orange-500 text-[10px] font-black uppercase tracking-[0.4em]">The Floor is Yours</span>
+                <div class="h-[1px] w-12 bg-orange-600/50"></div>
+            </div>
+            
+            <h1 class="qna-text font-black select-none">Q&A</h1>
+            
+            <div class="mt-12 space-y-4">
+                <div class="flex justify-center gap-2">
+                    <span class="px-3 py-1 rounded-full border border-stone-800 text-stone-500 text-[10px] font-bold uppercase tracking-widest">Architectural Patterns</span>
+                    <span class="px-3 py-1 rounded-full border border-stone-800 text-stone-500 text-[10px] font-bold uppercase tracking-widest">Performance</span>
+                    <span class="px-3 py-1 rounded-full border border-stone-800 text-stone-500 text-[10px] font-bold uppercase tracking-widest">Code Quality</span>
+                </div>
+            </div>
+
+            <div class="absolute bottom-16 flex flex-col items-center gap-2">
+                <p class="text-stone-600 text-[10px] font-bold uppercase tracking-[0.2em]">Press ESC to resume</p>
+                <div class="w-6 h-1 rounded-full bg-stone-900 overflow-hidden">
+                    <div class="w-1/2 h-full bg-orange-600 animate-[shimmer_2s_infinite_linear]"></div>
+                </div>
+            </div>
         </div>
-        <footer class="absolute bottom-12 left-0 w-full text-center">
-            <p class="text-stone-500 font-mono text-sm tracking-widest uppercase">
-                The floor is now open for your questions
-            </p>
-        </footer>
     </div>
 
-    <nav
-        class="w-full md:w-1/4 lg:w-1/5 bg-white border-r border-stone-200 flex flex-col h-auto md:h-screen sticky top-0 overflow-y-auto z-10">
-        <div class="flex-1 py-4 flex flex-col" id="nav-container-wrapper">
-            <div id="nav-container" class="flex-1"></div>
-
-            <!-- Presenter Tools -->
-            <div class="p-6 border-t border-stone-200 mt-auto">
-                <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-4">Presenter Tools</h3>
-                <button onclick="showQnAScreen()"
-                    class="w-full bg-stone-900 hover:bg-black text-white px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-lg flex items-center justify-center gap-2">
-                    🚀 Show Q&A Screen
-                </button>
-            </div>
+    <!-- Navigation -->
+    <nav class="w-full md:w-1/4 lg:w-1/5 bg-white border-r border-stone-200 flex flex-col h-auto md:h-screen sticky top-0 overflow-y-auto z-10">
+        <div class="p-6 border-b border-stone-100">
+            <h1 class="text-xl font-bold text-stone-800 flex items-center gap-2">
+                <span class="text-orange-600">λ</span> Expert Talk
+            </h1>
+        </div>
+        <div id="nav-container" class="flex-1 py-4 space-y-1 px-2"></div>
+        <div class="p-6 border-t border-stone-100 bg-stone-50/50">
+            <button onclick="showQnAScreen()" class="w-full bg-stone-900 text-white py-3 rounded-xl text-xs font-bold shadow-md hover:bg-black transition-all flex items-center justify-center gap-2">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                Launch Q&A
+            </button>
         </div>
     </nav>
 
-    <main class="w-full md:w-3/4 lg:w-4/5 p-4 md:p-8 overflow-y-auto relative">
-        <div class="max-w-5xl mx-auto">
-
-            <header class="mb-8">
-                <h2 class="text-3xl md:text-4xl font-extrabold text-stone-800" id="content-title">Loading...</h2>
-                <div class="flex items-center gap-3 mt-3 text-stone-500 font-medium">
-                    <span id="content-focus"></span>
-                </div>
+    <!-- Main Content -->
+    <main class="w-full md:w-3/4 lg:w-4/5 p-4 md:p-10 bg-stone-50 overflow-y-auto">
+        <div class="max-w-4xl mx-auto animate-content" id="main-content-wrapper">
+            
+            <header class="mb-10">
+                <span class="bg-orange-100 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block shadow-sm" id="pillar-badge"></span>
+                <h2 class="text-4xl md:text-5xl font-black text-stone-900 tracking-tight" id="content-title"></h2>
+                <div class="mt-4 text-stone-500 font-medium italic border-l-4 border-orange-500 pl-4 text-lg" id="content-focus"></div>
             </header>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div class="lg:col-span-2 space-y-6">
-                    <section class="glass-panel rounded-xl p-6">
-                        <h3 class="text-xl font-bold text-stone-800 mb-3 flex items-center gap-2"><span>📘</span> The
-                            Concept</h3>
-                        <p class="text-stone-600 leading-relaxed" id="content-desc"></p>
-                    </section>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                <!-- Content-Rich Architecture Principle Panel -->
+                <div class="lg:col-span-7 space-y-6">
+                    <section class="glass-panel rounded-2xl p-8 bg-white h-full flex flex-col shadow-sm">
+                        <div class="flex items-center justify-between mb-8">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-orange-600 text-white p-2.5 rounded-xl text-sm shadow-lg">📘</span>
+                                <h3 class="text-lg font-bold text-stone-900 tracking-tight">Technical Strategy</h3>
+                            </div>
+                            <div id="pillar-impact-container" class="flex flex-col items-end">
+                                <span class="text-[9px] font-bold uppercase text-stone-400 tracking-widest mb-1">Impact Level</span>
+                                <span id="pillar-impact" class="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-orange-600 text-white tracking-widest">High</span>
+                            </div>
+                        </div>
 
-                    <section class="glass-panel rounded-xl p-6 bg-orange-50/50 border-orange-100">
-                        <h3 class="text-xl font-bold text-orange-800 mb-3 flex items-center gap-2"><span>🧠</span>
-                            Student Analogy</h3>
-                        <p class="text-stone-700 italic font-medium mb-2" id="analogy-title"></p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
-                            <div class="bg-white p-4 rounded-lg border border-red-100 shadow-sm">
-                                <p class="font-bold text-red-600 mb-1">❌ The Junior Trap</p>
-                                <p class="text-stone-600" id="analogy-bad"></p>
-                            </div>
-                            <div class="bg-white p-4 rounded-lg border border-green-100 shadow-sm">
-                                <p class="font-bold text-green-600 mb-1">✅ The Senior Fix</p>
-                                <p class="text-stone-600" id="analogy-good"></p>
-                            </div>
+                        <div class="mb-8">
+                            <p class="text-stone-700 leading-relaxed text-lg font-normal border-l-2 border-stone-100 pl-6" id="content-desc"></p>
+                        </div>
+
+                        <div class="mt-auto senior-brief-box p-6 shadow-2xl">
+                            <h4 class="text-[10px] font-black uppercase text-orange-400 tracking-[0.2em] mb-3 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13.657 15.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zM16.464 14.95a1 1 0 10-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707z"></path></svg>
+                                Pro Interview Point
+                            </h4>
+                            <p id="pro-point" class="text-stone-300 text-sm leading-relaxed font-light italic"></p>
                         </div>
                     </section>
                 </div>
 
-                <div class="space-y-6">
-                    <section class="glass-panel rounded-xl p-6">
-                        <h3 class="text-lg font-bold text-stone-800 mb-4 text-center">Cognitive Load Comparison</h3>
-                        <div class="chart-container h-48">
-                            <canvas id="metricsChart"></canvas>
+                <!-- Cognitive Overhead Visualizer -->
+                <div class="lg:col-span-5">
+                    <section class="glass-panel rounded-2xl bg-white border border-stone-200 overflow-hidden shadow-sm h-full flex flex-col">
+                        <div class="p-6 border-b border-stone-100">
+                            <h3 class="text-sm font-bold text-stone-900 tracking-tight">Cognitive Overhead</h3>
+                            <p class="text-[12px] text-stone-500 mt-1">Implementation friction per complexity level.</p>
                         </div>
-                        <p class="text-xs text-stone-500 text-center mt-2">Lower is better. Measures mental effort
-                            required to read the logic.</p>
-                    </section>
-
-                    <section class="glass-panel rounded-xl p-6 bg-stone-800 text-stone-100 border-stone-900">
-                        <h3 class="text-lg font-bold text-orange-400 mb-3 flex items-center gap-2"><span>🗣️</span>
-                            Interview Script</h3>
-                        <p class="text-sm leading-relaxed italic" id="interview-script"></p>
+                        
+                        <div class="px-6 pt-10 pb-4 flex-1">
+                            <div class="chart-container">
+                                <canvas id="metricsChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-2">
+                            <div class="flex gap-2 items-center text-[12px] font-medium text-stone-700">
+                                <span id="trending-indicator" class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                    Performance optimized via FP patterns
+                                </span>
+                            </div>
+                            <div class="text-[11px] text-stone-400">
+                                Measuring mental cycles relative to imperative baseline.
+                            </div>
+                        </div>
                     </section>
                 </div>
             </div>
 
-            <section class="glass-panel rounded-xl overflow-hidden flex flex-col mb-12">
-                <div class="bg-stone-100 border-b border-stone-200 px-4 py-3 flex justify-between items-center">
-                    <h3 class="font-bold text-stone-800 flex items-center gap-2"><span>💻</span> The Shift in Thinking
-                        (Code)</h3>
-                    <div class="flex bg-stone-200 rounded-lg p-1">
-                        <button id="btn-junior"
-                            class="px-4 py-1.5 rounded-md text-sm font-medium bg-white shadow-sm text-red-600 transition-all">❌
-                            Junior Trap</button>
-                        <button id="btn-senior"
-                            class="px-4 py-1.5 rounded-md text-sm font-medium text-stone-500 hover:text-stone-700 transition-all">✅
-                            Senior Fix</button>
+            <!-- Code Comparison Section -->
+            <section class="glass-panel rounded-3xl overflow-hidden shadow-2xl border-none mb-20">
+                <!-- Toolbar -->
+                <div class="bg-stone-900 px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <div class="flex items-center gap-6">
+                        <div class="flex bg-stone-800 rounded-xl p-1 shadow-inner border border-stone-700/50">
+                            <button onclick="setComplexity('easy')" id="c-easy" class="complexity-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Easy</button>
+                            <button onclick="setComplexity('medium')" id="c-medium" class="complexity-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Medium</button>
+                            <button onclick="setComplexity('hard')" id="c-hard" class="complexity-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Hard</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <span class="text-stone-500 text-[10px] font-bold uppercase tracking-widest mr-2">View Mode:</span>
+                        <div class="flex bg-stone-800 rounded-xl p-1 shadow-inner border border-stone-700/50">
+                            <button id="view-junior" onclick="setViewMode('junior')" class="view-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Junior</button>
+                            <button id="view-both" onclick="setViewMode('both')" class="view-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Compare</button>
+                            <button id="view-senior" onclick="setViewMode('senior')" class="view-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Senior</button>
+                        </div>
                     </div>
                 </div>
-                <div class="p-6 bg-[#1e1e1e] text-[#d4d4d4] font-mono text-sm overflow-x-auto relative">
-                    <div id="code-junior-view" class="code-block text-red-300"></div>
-                    <div id="code-senior-view" class="code-block text-green-300 hide"></div>
+
+                <!-- Vertical Code Stack -->
+                <div class="flex flex-col bg-[#1e1e1e] divide-y divide-stone-800" id="vertical-code-container">
+                    <!-- Junior Block -->
+                    <div id="junior-section" class="transition-all duration-300">
+                        <div class="code-header px-6 py-2 flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span>
+                                <span class="text-[10px] font-black text-rose-500/80 uppercase tracking-[0.2em]">The Junior Trap</span>
+                            </div>
+                            <span class="text-[10px] text-stone-600 font-mono">Messy / Mutable</span>
+                        </div>
+                        <div class="p-8">
+                            <pre><code id="code-junior-view" class="language-javascript"></code></pre>
+                        </div>
+                    </div>
+                    
+                    <!-- Senior Block -->
+                    <div id="senior-section" class="transition-all duration-300">
+                        <div class="code-header px-6 py-2 flex justify-between items-center bg-emerald-500/[0.02]">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                <span class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">The Senior Fix</span>
+                            </div>
+                            <span class="text-[10px] text-stone-600 font-mono">Clean / Immutable</span>
+                        </div>
+                        <div class="p-8">
+                            <pre><code id="code-senior-view" class="language-javascript"></code></pre>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-stone-50 p-4 border-t border-stone-200">
-                    <h4 class="font-bold text-stone-700 text-sm mb-2">Why this matters:</h4>
-                    <ul class="text-sm text-stone-600 space-y-1 list-disc list-inside" id="shift-reasons"></ul>
+
+                <!-- Technical Rationales (Chips) -->
+                <div class="bg-white p-8 border-t border-stone-100">
+                    <h4 class="font-bold text-stone-900 text-xs uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
+                        <span class="w-1.5 h-4 bg-orange-600 rounded-full"></span>
+                        Technical Rationale
+                    </h4>
+                    <div class="flex flex-wrap gap-3" id="shift-reasons">
+                        <!-- Chips injected here -->
+                    </div>
                 </div>
             </section>
-
         </div>
     </main>
 
@@ -197,122 +337,174 @@
             pillars: [
                 {
                     id: 1,
-                    title: "Pillar 1: The Purity Protocol",
-                    focus: "Eliminating side effects & unpredictable state.",
-                    desc: "Academic code relies heavily on global variables to store state. Professional code isolates state. A 'Pure Function' guarantees that given the same input, you get the exact same output, with zero side effects (no mutating external variables, no unprompted API calls).",
-                    analogyTitle: "The College Library vs. The Local Xerox Shop",
-                    analogyBad: "You borrow a college library book and highlight your notes directly on the pages. You've ruined the book for the next batch of students (a side effect).",
-                    analogyGood: "You go to the local Xerox shop, photocopy the chapter, highlight your copy, and return the original book untouched. Safe, predictable, and repeatable.",
-                    codeJunior: "let cgpa = 8.2;\nconst addGraceMarks = (points) => { cgpa += points; }; \n\naddGraceMarks(0.5); // Mutates global state!",
-                    codeSenior: "const calculateNewCgpa = (currentCgpa, points) => currentCgpa + points;\n\nconst newCgpa = calculateNewCgpa(8.2, 0.5); // Safe & Pure",
-                    shiftReasons: [
-                        "Relies on explicit arguments instead of external scope.",
-                        "Returns a brand-new copy instead of modifying data directly.",
-                        "Trivial to test in complete isolation without mocking environments."
-                    ],
-                    script: "I'm writing this as a pure function to keep it deterministic and testable in isolation. By avoiding side effects, we prevent race conditions in larger applications.",
-                    metrics: [85, 20]
+                    title: "The Purity Protocol",
+                    focus: "Isolating side-effects for zero-bug predictability.",
+                    desc: "At its core, this is about Referential Transparency. A function is \"pure\" if it always returns the same output for the same input and has no side effects (e.g., modifying a global variable, logging to a console, or making an API call).",
+                    proPoint: "Don't just say \"no side effects.\" Talk about isolating impurity. A senior-level architecture uses a \"Functional Core, Imperative Shell\"—where all business logic is pure, and side effects are pushed to the very edges of the application.",
+                    impact: "Critical",
+                    examples: {
+                        easy: {
+                            junior: "let total = 0;\n\nfunction add(val) {\n  total += val; // Direct mutation of global scope\n}",
+                            senior: "const add = (a, b) => a + b;\n\n// Returns a new value without touching external state\nconst total = add(5, 10);",
+                            reasons: ["Zero External Dependency", "Deterministic Output", "Pure Logic Atom"]
+                        },
+                        medium: {
+                            junior: "const user = { name: 'Rahul' };\n\nfunction rename(newName) {\n  user.name = newName; // Mutates reference directly\n}",
+                            senior: "const rename = (user, name) => ({\n  ...user, \n  name \n});\n\nconst updated = rename(user, 'Vikram');",
+                            reasons: ["Reference Stability", "State Immutability", "Referential Transparency"]
+                        },
+                        hard: {
+                            junior: "function updateConfig(key, val) {\n  window.CONFIG[key] = val;\n  logger.log('Global Config Mutated');\n}",
+                            senior: "const createUpdate = (key, val) => (config) => ({\n  ...config,\n  [key]: val\n});\n\n// Separation of 'Update Logic' from 'Execution'",
+                            reasons: ["Effect Isolation", "Lazy Evaluation", "Functional Injection"]
+                        }
+                    },
+                    metrics: [85, 12]
                 },
                 {
                     id: 2,
-                    title: "Pillar 2: Declarative vs. Imperative",
-                    focus: "What to do vs. How to do it (Array Methods).",
-                    desc: "Imperative programming tells the computer exactly how to do something step-by-step. Declarative programming tells the computer what result you want, letting abstractions handle the mechanics.",
-                    analogyTitle: "The Auto Rickshaw Ride",
-                    analogyBad: "Bhaiya, go 100 meters straight, take a left from the Mother Dairy booth, avoid that pothole, take a right at the temple, and stop.",
-                    analogyGood: "Bhaiya, drop me at Rajiv Chowk Metro Station. The complex steps (driving and navigating) are abstracted away.",
-                    codeJunior: "const marks = [85, 92, 33, 78];\nlet passingMarks = [];\nfor (let i = 0; i < marks.length; i++) {\n  if (marks[i] >= 40) passingMarks.push(marks[i]);\n}",
-                    codeSenior: "const marks = [85, 92, 33, 78];\nconst passingMarks = marks.filter(mark => mark >= 40);",
-                    shiftReasons: [
-                        "Replaces manual loop indexing with robust higher-order functions.",
-                        "Chains methods to flow data directly into constants.",
-                        "Reads like English, reducing cognitive load for the reviewer."
-                    ],
-                    script: "I prefer a declarative abstraction here. By using filter, we achieve a cleaner separation of concerns and prioritize readability over micro-managing the iteration.",
+                    title: "Declarative Logic",
+                    focus: "Focusing on 'What' result is needed, not 'How' to loop.",
+                    desc: "Shifting from how to do something (Imperative) to what you want to achieve (Declarative). Instead of writing for loops with counters, you use abstractions like map, filter, and reduce.",
+                    proPoint: "Mention that declarative code reduces cognitive load. When you use filter(), the reader immediately understands the intent (selection), whereas a for loop requires them to manually trace the logic to understand the goal.",
+                    impact: "High",
+                    examples: {
+                        easy: {
+                            junior: "let count = 0;\nfor(let i = 0; i < arr.length; i++) {\n  count++;\n}",
+                            senior: "const count = arr.length;",
+                            reasons: ["Semantic Intent", "Reduced Boilerplate", "No Index Errors"]
+                        },
+                        medium: {
+                            junior: "let highScorers = [];\nfor(let x of students) {\n  if(x.score > 90) highScorers.push(x);\n}",
+                            senior: "const highScorers = students.filter(s => s.score > 90);",
+                            reasons: ["Abstracted Iteration", "Method Chaining", "Self-Documenting"]
+                        },
+                        hard: {
+                            junior: "let grouped = {};\nfor(let p of products) {\n  if(!grouped[p.cat]) grouped[p.cat] = [];\n  grouped[p.cat].push(p);\n}",
+                            senior: "const grouped = products.reduce((acc, p) => ({\n  ...acc, \n  [p.cat]: [...(acc[p.cat] || []), p]\n}), {});",
+                            reasons: ["Single-Pass Reduction", "Aggregate Logic", "Object Composition"]
+                        }
+                    },
                     metrics: [75, 15]
                 },
                 {
                     id: 3,
-                    title: "Pillar 3: The Interview Power Duo",
-                    focus: "Currying & Closures for modular logic.",
-                    desc: "Closures and Currying are top concepts in Big Tech interviews. A closure 'remembers' the variables from its creation environment. Currying evaluates a function with multiple arguments, one argument at a time.",
-                    analogyTitle: "The Delhi Metro Smart Card",
-                    analogyBad: "A regular function is like buying a single-use paper token.",
-                    analogyGood: "A Closure is a Metro Smart Card. It 'remembers' your balance. Currying configures it: createCard(student)(balance).",
-                    codeJunior: "const calculateDiscount = (discount, price) => price - (price * discount);\n\ncalculateDiscount(0.20, 1000);",
-                    codeSenior: "const applyDiscount = discount => price => price - (price * discount);\n\n// We 'lock in' the 20% discount in the closure's memory\nconst applyStudentDiscount = applyDiscount(0.20); \nconsole.log(applyStudentDiscount(1000)); // 800",
-                    shiftReasons: [
-                        "Breaks down massive functions into single-argument steps.",
-                        "Creates 'factory' closures to generate tailored functions.",
-                        "Prevents repetition of logic across the codebase."
-                    ],
-                    script: "I'm using lexical scoping to create a closure. Through partial application, we can lock in the first parameter and generate highly reusable utility functions without polluting the global scope.",
-                    metrics: [60, 30]
+                    title: "Currying & Closures",
+                    focus: "Designing specialized logic factories via lexical scope.",
+                    desc: "Currying transforms a multi-argument function into a sequence of unary functions. Closures allow a function to \"remember\" the environment in which it was created, even after the outer scope has closed.",
+                    proPoint: "These are the building blocks of Function Factories. You can use currying to create specialized functions from generic ones (e.g., a generic logger(level, message) becomes a pre-configured errorLogger(message)).",
+                    impact: "Medium",
+                    examples: {
+                        easy: {
+                            junior: "function multiply(a, b) {\n  return a * b;\n}",
+                            senior: "const multiply = a => b => a * b;\n\nconst double = multiply(2);\nconst result = double(5); // 10",
+                            reasons: ["Partial Application", "Logic Templating", "Parameter Locking"]
+                        },
+                        medium: {
+                            junior: "function log(level, message) {\n  console.log(`[${level}] ${message}`);\n}",
+                            senior: "const logger = level => message => \n  `[${level}] ${message}`;\n\nconst error = logger('ERROR');\nerror('System Crash');",
+                            reasons: ["Factory Pattern", "Namespace Isolation", "DRY Logic"]
+                        },
+                        hard: {
+                            junior: "async function fetchAPI(url, token, params) {\n  return await request(url, token, params);\n}",
+                            senior: "const api = token => url => async params => \n  await request(url, token, params);\n\nconst authorized = api('SECURE-TOKEN');\nconst getUser = authorized('/user');",
+                            reasons: ["Dependency Injection", "Scoped Security", "Modular Contracts"]
+                        }
+                    },
+                    metrics: [60, 22]
                 },
                 {
                     id: 4,
-                    title: "Pillar 4: The Pipeline Method",
-                    focus: "Transforming spaghetti code into linear streams.",
-                    desc: "Spaghetti code happens when you nest functions inside functions. Functional programmers solve this with Composition: passing the output of one function directly into the input of the next.",
-                    analogyTitle: "Text Formatting Assembly Line",
-                    analogyBad: "One exhausted professor doing all evaluations at once.",
-                    analogyGood: "Data moves down a pipeline: Raw Input ➡️ Remove Spaces ➡️ Make Uppercase ➡️ Add Punctuation.",
-                    codeJunior: "const finalResult = exclaim(capitalize(trim(\"   namaste india   \")));\n// Hard to debug; you read it inside-out.",
-                    codeSenior: "const pipe = (...fns) => (x) => fns.reduce((v, f) => f(v), x);\n\nconst formatString = pipe(\n  trim,\n  capitalize,\n  exclaim\n);\n\nconst finalResult = formatString(\"   namaste india   \");",
-                    shiftReasons: [
-                        "Replaces inside-out nested functions (Onion Architecture).",
-                        "Reads top-to-bottom or left-to-right, making debugging easy.",
-                        "Encourages building small, single-purpose pure functions."
-                    ],
-                    script: "To respect the Single Responsibility Principle, I'm composing small, pure functions. This creates a highly readable unidirectional data flow.",
-                    metrics: [90, 25]
+                    title: "Composition Pipelines",
+                    focus: "Linearizing complex transformations through pipes.",
+                    desc: "This is the \"Lego-brick\" approach to coding. You take small, single-responsibility functions and chain them together using pipe() or compose() to create complex, readable transformations.",
+                    proPoint: "Pipelines turn code into a data-driven flow. It makes the logic linear and easy to read from top to bottom, avoiding the \"Pyramid of Doom\" (deeply nested function calls).",
+                    impact: "Critical",
+                    examples: {
+                        easy: {
+                            junior: "const res = exclaim(trim('  hello  '));",
+                            senior: "const pipe = (f, g) => x => g(f(x));\n\nconst process = pipe(trim, exclaim);\nprocess('  hello  ');",
+                            reasons: ["Linear Readability", "Modular Units", "No Call Nesting"]
+                        },
+                        medium: {
+                            junior: "const format = (user) => {\n  const name = user.name.trim();\n  return name.toUpperCase();\n}",
+                            senior: "const format = pipe(\n  u => u.name,\n  trim,\n  toUpper\n);\n\nformat(user);",
+                            reasons: ["Point-Free Design", "Unidirectional Flow", "Step-Wise Logic"]
+                        },
+                        hard: {
+                            junior: "function process(data) {\n  const valid = validate(data);\n  if(!valid) return null;\n  return encrypt(valid);\n}",
+                            senior: "const process = pipe(\n  validate,\n  map(encrypt), // Functor mapping\n  getOrElse(DEFAULT_STATE)\n);",
+                            reasons: ["Railway Orientation", "Safe Null Handling", "Exit Path Logic"]
+                        }
+                    },
+                    metrics: [92, 14]
                 },
                 {
                     id: 5,
-                    title: "Pillar 5: Deep Data Elegance",
-                    focus: "Handling nested structures without mutation.",
-                    desc: "In UI architectures like React, mutating deeply nested objects is a fatal flaw. You must learn to copy and update objects non-destructively using structural sharing.",
-                    analogyTitle: "B.Tech Final Project Versioning",
-                    analogyBad: "Permanently editing the only master copy of your thesis the night before.",
-                    analogyGood: "Duplicating the file to _v2, making the edit there, and preserving the original.",
-                    codeJunior: "const student = { name: \"Rahul\", academic: { branch: \"CSE\", sem: 3 } };\n\n// Destructive Mutation\nstudent.academic.sem = 4;",
-                    codeSenior: "const student = { name: \"Rahul\", academic: { branch: \"CSE\", sem: 3 } };\n\n// Deep Immutability via Spread Syntax\nconst updatedStudent = {\n  ...student,\n  academic: {\n    ...student.academic,\n    sem: 4\n  }\n};",
-                    shiftReasons: [
-                        "Prevents modifying the memory reference directly.",
-                        "Ensures UI frameworks can detect state changes reliably.",
-                        "Utilizes Structural Sharing to optimize memory."
-                    ],
-                    script: "I'm explicitly avoiding a destructive update. By using the spread operator to create a shallow copy at each nested level, we utilize structural sharing.",
-                    metrics: [50, 40]
+                    title: "Structural Sharing",
+                    focus: "Optimizing state updates without losing data history.",
+                    desc: "This is the secret sauce behind performance in immutable data structures. When you \"change\" an object, you don't copy everything; you create a new version that shares most structure with the old one.",
+                    proPoint: "This is critical for memory efficiency. It allows libraries like Immutable.js or React’s state management to perform \"Lightning Fast\" change detection by comparing memory references (old === new).",
+                    impact: "High",
+                    examples: {
+                        easy: {
+                            junior: "obj.id = 1; // Direct mutation",
+                            senior: "const newObj = { ...obj, id: 1 };",
+                            reasons: ["Change Detection", "Historical Snapshot", "Reference Safety"]
+                        },
+                        medium: {
+                            junior: "arr.push(4); // Modifies array in-place",
+                            senior: "const newArr = [...arr, 4];",
+                            reasons: ["Non-Destructive", "React Compatibility", "Predictable State"]
+                        },
+                        hard: {
+                            junior: "state.user.prefs.theme = 'dark';",
+                            senior: "const updateTheme = theme => state => ({\n  ...state,\n  user: { \n    ...state.user, \n    prefs: { ...state.user.prefs, theme } \n  }\n});",
+                            reasons: ["Deep Immutability", "Shared Memory", "Traceable Updates"]
+                        }
+                    },
+                    metrics: [55, 30]
                 },
                 {
                     id: 6,
-                    title: "Pillar 6: The Screening Edge",
-                    focus: "Whiteboard strategy & signaling seniority.",
-                    desc: "Applying FP principles isn't just about clean code; it's about signaling to the interviewer that you operate at a higher architectural level than a typical junior engineer.",
-                    analogyTitle: "The Whiteboard Strategy",
-                    analogyBad: "Immediately writing a 'let' variable and a 'for' loop on the board.",
-                    analogyGood: "Pausing, stating state management goals, and writing declarative pipelines.",
-                    codeJunior: "// Typical Junior Start\nfunction process(data) {\n  let result = [];\n  // ...\n}",
-                    codeSenior: "// Senior Start\nconst processPipeline = (data) => {\n  // Using immutability and const exclusively\n  return data.map(...)\n};",
-                    shiftReasons: [
-                        "Never write a for loop unless specifically asked for pointer algorithms.",
-                        "Talk about state immutability proactively before writing code.",
-                        "Use const exclusively to force yourself out of accumulator habits."
-                    ],
-                    script: "Before I write the transformation, my priority here is to keep the state immutable and utilize a unidirectional data flow to prevent side effects.",
-                    metrics: [40, 10]
+                    title: "Senior Edge",
+                    focus: "Mastering whiteboard signaling and ES6+ semantics.",
+                    desc: "This is your \"closing statement.\" It refers to using the above principles to make Illegal States Unrepresentable, ensuring that the architecture prevents entire classes of bugs by design.",
+                    proPoint: "Explain that a senior engineer's edge comes from using types and functional patterns to ensure certain bugs cannot even compile. For example, using Option/Maybe monads to force safe handling of \"missing\" data.",
+                    impact: "High",
+                    examples: {
+                        easy: {
+                            junior: "function reverse(str) {\n  let res = '';\n  for(let i=str.length-1; i>=0; i--) res += str[i];\n}",
+                            senior: "const reverse = str => [...str].reverse().join('');",
+                            reasons: ["Native Power", "Concise Intent", "Zero Manual Management"]
+                        },
+                        medium: {
+                            junior: "function uniq(arr) {\n  let res = [];\n  for(let x of arr) if(!res.includes(x)) r.push(x);\n}",
+                            senior: "const uniq = arr => [...new Set(arr)];",
+                            reasons: ["O(n) Complexity", "Data Structure Mastery", "Modern Semantics"]
+                        },
+                        hard: {
+                            junior: "function flatten(arr) {\n  let res = [];\n  arr.forEach(x => Array.isArray(x) ? res.push(...flatten(x)) : res.push(x));\n}",
+                            senior: "const flatten = arr => arr.flatMap(x => \n  Array.isArray(x) ? flatten(x) : x\n);",
+                            reasons: ["Recursive Clarity", "Built-in Iterators", "Elegant Recursion"]
+                        }
+                    },
+                    metrics: [45, 10]
                 }
             ]
         };
 
         let currentPillarId = 1;
+        let currentComplexity = 'easy';
+        let currentViewMode = 'both';
         let metricsChartInstance = null;
+
+        Chart.register(ChartDataLabels);
 
         function init() {
             renderNav();
             renderContent(1);
-            setupToggleEvents();
+            setViewMode('both');
 
             // Key listener for escape key to hide Q&A
             document.addEventListener('keydown', (e) => {
@@ -320,28 +512,19 @@
             });
         }
 
-        function showQnAScreen() {
-            document.getElementById('qna-overlay').style.display = 'flex';
-        }
-
-        function hideQnAScreen() {
-            document.getElementById('qna-overlay').style.display = 'none';
-        }
-
         function renderNav() {
-            const navContainer = document.getElementById('nav-container');
-            masterclassData.pillars.forEach(p => {
+            const container = document.getElementById('nav-container');
+            masterclassData.pillars.forEach((p, idx) => {
                 const btn = document.createElement('button');
-                btn.className = 'w-full text-left px-6 py-3 text-sm transition-colors focus:outline-none flex justify-between items-center group';
+                btn.className = 'w-full text-left px-4 py-3 text-[13px] rounded-xl transition-all flex items-center gap-3 inactive-nav group';
                 btn.id = 'nav-btn-' + p.id;
-                btn.innerHTML = `<span class="truncate pr-2">${p.title}</span>`;
+                btn.innerHTML = `<span class="text-[10px] font-bold opacity-30 group-hover:opacity-100 transition-opacity">0${idx+1}</span> <span class="flex-1">${p.title}</span>`;
                 btn.onclick = () => {
                     currentPillarId = p.id;
                     updateNavStyles();
                     renderContent(p.id);
-                    setJuniorSeniorToggle('senior');
                 };
-                navContainer.appendChild(btn);
+                container.appendChild(btn);
             });
             updateNavStyles();
         }
@@ -349,70 +532,79 @@
         function updateNavStyles() {
             masterclassData.pillars.forEach(p => {
                 const btn = document.getElementById('nav-btn-' + p.id);
-                if (p.id === currentPillarId) {
-                    btn.className = 'w-full text-left px-6 py-3 text-sm transition-colors focus:outline-none flex justify-between items-center group active-nav';
-                } else {
-                    btn.className = 'w-full text-left px-6 py-3 text-sm transition-colors focus:outline-none flex justify-between items-center group inactive-nav';
-                }
+                btn.className = p.id === currentPillarId ? 
+                    'w-full text-left px-4 py-3 text-[13px] rounded-xl transition-all flex items-center gap-3 active-nav' : 
+                    'w-full text-left px-4 py-3 text-[13px] rounded-xl transition-all flex items-center gap-3 inactive-nav group';
             });
+        }
+
+        function setComplexity(level) {
+            currentComplexity = level;
+            document.querySelectorAll('.complexity-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('c-' + level).classList.add('active');
+            renderContent(currentPillarId);
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('view-' + mode).classList.add('active');
+            
+            const jr = document.getElementById('junior-section');
+            const sr = document.getElementById('senior-section');
+
+            if (mode === 'junior') {
+                jr.classList.remove('hidden');
+                sr.classList.add('hidden');
+            } else if (mode === 'senior') {
+                jr.classList.add('hidden');
+                sr.classList.remove('hidden');
+            } else {
+                jr.classList.remove('hidden');
+                sr.classList.remove('hidden');
+            }
         }
 
         function renderContent(id) {
             const data = masterclassData.pillars.find(p => p.id === id);
+            const example = data.examples[currentComplexity];
 
+            document.getElementById('pillar-badge').innerText = `Pillar 0${data.id}`;
             document.getElementById('content-title').innerText = data.title;
             document.getElementById('content-focus').innerText = data.focus;
             document.getElementById('content-desc').innerText = data.desc;
+            document.getElementById('pro-point').innerText = data.proPoint;
 
-            document.getElementById('analogy-title').innerText = data.analogyTitle;
-            document.getElementById('analogy-bad').innerText = data.analogyBad;
-            document.getElementById('analogy-good').innerText = data.analogyGood;
+            // Pillar Meta
+            document.getElementById('pillar-impact').innerText = data.impact || 'High';
+            const impactContainer = document.getElementById('pillar-impact');
+            impactContainer.className = 'text-[10px] font-black uppercase px-2.5 py-1 rounded-lg text-white tracking-widest ' + 
+                (data.impact === 'Critical' ? 'bg-rose-600' : 'bg-orange-600');
 
-            document.getElementById('code-junior-view').innerText = data.codeJunior;
-            document.getElementById('code-senior-view').innerText = data.codeSenior;
+            // Update Code with Syntax Highlighting
+            const jrCode = document.getElementById('code-junior-view');
+            const srCode = document.getElementById('code-senior-view');
+            jrCode.textContent = example.junior;
+            srCode.textContent = example.senior;
+            Prism.highlightElement(jrCode);
+            Prism.highlightElement(srCode);
 
-            document.getElementById('interview-script').innerText = '"' + data.script + '"';
+            const reasonsContainer = document.getElementById('shift-reasons');
+            reasonsContainer.innerHTML = example.reasons.map(r => `
+                <div class="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-orange-100 shadow-sm">
+                    <svg class="w-3 h-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    ${r}
+                </div>
+            `).join('');
 
-            const ul = document.getElementById('shift-reasons');
-            ul.innerHTML = '';
-            data.shiftReasons.forEach(r => {
-                const li = document.createElement('li');
-                li.innerText = r;
-                ul.appendChild(li);
-            });
-
-            updateMetricsChart(data.metrics);
+            updateChart(data.metrics);
+            setViewMode(currentViewMode);
         }
 
-        function setupToggleEvents() {
-            const btnJr = document.getElementById('btn-junior');
-            const btnSr = document.getElementById('btn-senior');
-
-            btnJr.onclick = () => setJuniorSeniorToggle('junior');
-            btnSr.onclick = () => setJuniorSeniorToggle('senior');
-        }
-
-        function setJuniorSeniorToggle(mode) {
-            const btnJr = document.getElementById('btn-junior');
-            const btnSr = document.getElementById('btn-senior');
-            const viewJr = document.getElementById('code-junior-view');
-            const viewSr = document.getElementById('code-senior-view');
-
-            if (mode === 'junior') {
-                btnJr.className = 'px-4 py-1.5 rounded-md text-sm font-medium bg-white shadow-sm text-red-600 transition-all';
-                btnSr.className = 'px-4 py-1.5 rounded-md text-sm font-medium text-stone-500 hover:text-stone-700 transition-all';
-                viewJr.classList.remove('hide');
-                viewSr.classList.add('hide');
-            } else {
-                btnSr.className = 'px-4 py-1.5 rounded-md text-sm font-medium bg-white shadow-sm text-green-600 transition-all';
-                btnJr.className = 'px-4 py-1.5 rounded-md text-sm font-medium text-stone-500 hover:text-stone-700 transition-all';
-                viewSr.classList.remove('hide');
-                viewJr.classList.add('hide');
-            }
-        }
-
-        function updateMetricsChart(metrics) {
+        function updateChart(metrics) {
             const ctx = document.getElementById('metricsChart').getContext('2d');
+            const colorJunior = '#ef4444';
+            const colorSenior = '#10b981';
 
             if (metricsChartInstance) {
                 metricsChartInstance.data.datasets[0].data = metrics;
@@ -421,32 +613,73 @@
                 metricsChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: ['Junior Method', 'Senior Fix'],
-                        datasets: [{
-                            label: 'Cognitive Load / Fragility',
-                            data: metrics,
-                            backgroundColor: ['#f87171', '#4ade80'],
-                            borderRadius: 4
+                        labels: ['Junior', 'Senior'],
+                        datasets: [{ 
+                            data: metrics, 
+                            backgroundColor: [colorJunior, colorSenior], 
+                            borderRadius: 8,
+                            barThickness: 50,
+                            borderSkipped: false
                         }]
                     },
                     options: {
-                        responsive: true,
+                        responsive: true, 
                         maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true, max: 100, display: false },
-                            x: { grid: { display: false } }
+                        animation: {
+                            duration: 800,
+                            easing: 'easeOutQuart'
                         },
-                        plugins: {
+                        layout: { padding: { top: 30 } },
+                        scales: { 
+                            y: { 
+                                display: true, 
+                                max: 110,
+                                grid: { display: true, drawBorder: false, color: 'rgba(231, 229, 228, 0.4)' },
+                                border: { display: false },
+                                ticks: { display: false }
+                            }, 
+                            x: { 
+                                grid: { display: false }, 
+                                border: { display: false },
+                                ticks: { font: { family: 'Inter', weight: '600', size: 12 }, color: '#78716c', padding: 10 } 
+                            } 
+                        },
+                        plugins: { 
                             legend: { display: false },
-                            tooltip: { enabled: false }
+                            datalabels: {
+                                anchor: 'end', align: 'top', offset: 8, color: '#1c1917',
+                                font: { family: 'Inter', weight: 'bold', size: 13 },
+                                formatter: (value) => value + '%'
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: '#ffffff',
+                                titleColor: '#1c1917',
+                                bodyColor: '#57534e',
+                                borderColor: '#e7e5e4',
+                                borderWidth: 1,
+                                titleFont: { size: 13, family: 'Inter', weight: 'bold' },
+                                bodyFont: { size: 12, family: 'Inter' },
+                                padding: 12,
+                                cornerRadius: 8,
+                                displayColors: false,
+                                shadowBlur: 10,
+                                shadowColor: 'rgba(0,0,0,0.1)',
+                                callbacks: {
+                                    title: (items) => items[0].label + ' Approach',
+                                    label: (context) => `Overhead: ${context.raw}%`
+                                }
+                            }
                         }
                     }
                 });
             }
         }
 
+        function showQnAScreen() { document.getElementById('qna-overlay').style.display = 'flex'; }
+        function hideQnAScreen() { document.getElementById('qna-overlay').style.display = 'none'; }
+
         window.onload = init;
     </script>
 </body>
-
 </html>
