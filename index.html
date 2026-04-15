@@ -4,682 +4,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expert Talk: Senior Engineering Mode</title>
+    <title>FP Masterclass: Senior Architect Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Plugin for labels on top of bars -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-    <!-- Prism Syntax Highlighting -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
-
-        :root {
-            --stone-50: #fafaf9;
-            --stone-100: #f5f5f4;
-            --stone-200: #e7e5e4;
-            --stone-300: #d6d3d1;
-            --stone-800: #292524;
-            --stone-900: #1c1917;
-            --orange-600: #ea580c;
-            --emerald-500: #10b981;
-            --rose-500: #f43f5e;
-        }
-
         body {
-            background-color: var(--stone-50);
-            color: var(--stone-900);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            scroll-behavior: smooth;
+            background-color: #fafaf9;
+            color: #1c1917;
+            font-family: system-ui, -apple-system, sans-serif;
         }
 
         .chart-container {
             position: relative;
             width: 100%;
-            height: 240px;
-        }
-
-        pre[class*="language-"] {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: transparent !important;
-            font-family: 'Fira Code', monospace !important;
-            font-size: 14px !important;
-        }
-
-        code[class*="language-"] {
-            font-family: 'Fira Code', monospace !important;
-        }
-
-        .active-nav {
-            background-color: #ffedd5;
-            border-left: 4px solid var(--orange-600);
-            color: #9a3412;
-            font-weight: 600;
-        }
-
-        .inactive-nav {
-            border-left: 4px solid transparent;
-            color: #57534e;
-        }
-
-        .inactive-nav:hover {
-            background-color: var(--stone-100);
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 200px;
         }
 
         .glass-panel {
             background: white;
-            border: 1px solid var(--stone-200);
+            border: 1px solid #e7e5e4;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        /* Improved Q&A Overlay Styles */
-        #qna-overlay {
-            display: none;
-            background-color: #0c0a09;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(234, 88, 12, 0.1) 0%, transparent 50%),
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 40px 40px, 40px 40px;
-            z-index: 100;
-            backdrop-filter: blur(10px);
+        .diff-btn-active {
+            background-color: #ea580c;
+            color: white;
+            box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+        }
+
+        .diff-btn-inactive {
+            background-color: #f5f5f4;
+            color: #78716c;
+        }
+
+        pre[class*="language-"] {
+            margin: 0 !important;
+            border-radius: 0 !important;
+            font-size: 0.85rem !important;
+            background: transparent !important;
         }
 
         .qna-text {
-            font-size: 20vw;
+            font-size: clamp(8rem, 20vw, 15rem);
             line-height: 1;
-            letter-spacing: -0.06em;
-            background: linear-gradient(to bottom, #ea580c, #9a3412);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 30px rgba(234, 88, 12, 0.4));
-        }
-
-        .complexity-btn.active {
-            background-color: var(--stone-800);
-            color: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .view-btn.active {
-            background-color: white;
-            color: var(--stone-900);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-content {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        .hide { display: none; }
-        
-        .code-header {
-            background: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .chart-bg {
-            background-image: radial-gradient(var(--stone-200) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        .senior-brief-box {
-            background: linear-gradient(to right, var(--stone-900), #444);
-            color: white;
-            border-radius: 1rem;
-            position: relative;
-            overflow: hidden;
+            letter-spacing: -0.05em;
         }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+<body class="min-h-screen flex flex-col pb-32 relative">
 
-    <!-- Premium Q&A Overlay -->
-    <div id="qna-overlay" class="fixed inset-0 flex flex-col items-center justify-center p-8">
-        <button onclick="hideQnAScreen()" 
-            class="absolute top-12 right-12 group flex items-center gap-3 text-stone-500 hover:text-orange-500 transition-all duration-300">
-            <span class="text-[10px] font-black uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-all">Close Deck</span>
-            <div class="w-10 h-10 rounded-full border border-stone-800 flex items-center justify-center group-hover:border-orange-500 group-hover:rotate-90 transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </div>
+    <!-- Q&A FULL SCREEN OVERLAY -->
+    <div id="qna-overlay"
+        class="fixed inset-0 flex flex-col items-center justify-center p-8 bg-[#0c0a09] z-[1000] hidden">
+        <button onclick="toggleQnA()"
+            class="absolute top-8 right-8 text-stone-500 hover:text-stone-300 font-mono text-sm tracking-widest uppercase flex items-center gap-2 transition-colors">
+            <span>✕</span> Close
         </button>
-
-        <div class="flex flex-col items-center max-w-4xl text-center">
-            <div class="mb-6 flex items-center gap-4 animate-bounce">
-                <div class="h-[1px] w-12 bg-orange-600/50"></div>
-                <span class="text-orange-500 text-[10px] font-black uppercase tracking-[0.4em]">The Floor is Yours</span>
-                <div class="h-[1px] w-12 bg-orange-600/50"></div>
-            </div>
-            
-            <h1 class="qna-text font-black select-none">Q&A</h1>
-            
-            <div class="mt-12 space-y-4">
-                <div class="flex justify-center gap-2">
-                    <span class="px-3 py-1 rounded-full border border-stone-800 text-stone-500 text-[10px] font-bold uppercase tracking-widest">Architectural Patterns</span>
-                    <span class="px-3 py-1 rounded-full border border-stone-800 text-stone-500 text-[10px] font-bold uppercase tracking-widest">Performance</span>
-                    <span class="px-3 py-1 rounded-full border border-stone-800 text-stone-500 text-[10px] font-bold uppercase tracking-widest">Code Quality</span>
-                </div>
-            </div>
-
-            <div class="absolute bottom-16 flex flex-col items-center gap-2">
-                <p class="text-stone-600 text-[10px] font-bold uppercase tracking-[0.2em]">Press ESC to resume</p>
-                <div class="w-6 h-1 rounded-full bg-stone-900 overflow-hidden">
-                    <div class="w-1/2 h-full bg-orange-600 animate-[shimmer_2s_infinite_linear]"></div>
-                </div>
-            </div>
+        <div class="flex flex-col items-center justify-center animate-pulse">
+            <h1 class="qna-text font-black text-orange-600 text-center tracking-tighter">Q&A</h1>
+            <div class="h-2 w-32 bg-stone-800 rounded-full mt-4"></div>
         </div>
+        <footer class="absolute bottom-12 left-0 w-full text-center">
+            <p class="text-stone-500 font-mono text-sm tracking-widest uppercase">The floor is now open for your
+                questions</p>
+        </footer>
     </div>
 
-    <!-- Navigation -->
-    <nav class="w-full md:w-1/4 lg:w-1/5 bg-white border-r border-stone-200 flex flex-col h-auto md:h-screen sticky top-0 overflow-y-auto z-10">
-        <div class="p-6 border-b border-stone-100">
-            <h1 class="text-xl font-bold text-stone-800 flex items-center gap-2">
-                <span class="text-orange-600">λ</span> Expert Talk
-            </h1>
-        </div>
-        <div id="nav-container" class="flex-1 py-4 space-y-1 px-2"></div>
-        <div class="p-6 border-t border-stone-100 bg-stone-50/50">
-            <button onclick="showQnAScreen()" class="w-full bg-stone-900 text-white py-3 rounded-xl text-xs font-bold shadow-md hover:bg-black transition-all flex items-center justify-center gap-2">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                Launch Q&A
-            </button>
-        </div>
-    </nav>
+    <!-- FLOATING Q&A BUTTON -->
+    <button onclick="toggleQnA()"
+        class="fixed top-6 right-6 z-50 text-xs font-bold uppercase tracking-widest text-stone-600 hover:text-orange-600 transition-colors bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full border border-stone-200 shadow-sm flex items-center gap-2">
+        <span>🎙️</span> Q&A Mode
+    </button>
 
-    <!-- Main Content -->
-    <main class="w-full md:w-3/4 lg:w-4/5 p-4 md:p-10 bg-stone-50 overflow-y-auto">
-        <div class="max-w-4xl mx-auto animate-content" id="main-content-wrapper">
-            
-            <header class="mb-10">
-                <span class="bg-orange-100 text-orange-700 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block shadow-sm" id="pillar-badge"></span>
-                <h2 class="text-4xl md:text-5xl font-black text-stone-900 tracking-tight" id="content-title"></h2>
-                <div class="mt-4 text-stone-500 font-medium italic border-l-4 border-orange-500 pl-4 text-lg" id="content-focus"></div>
-            </header>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
-                <!-- Content-Rich Architecture Principle Panel -->
-                <div class="lg:col-span-7 space-y-6">
-                    <section class="glass-panel rounded-2xl p-8 bg-white h-full flex flex-col shadow-sm">
-                        <div class="flex items-center justify-between mb-8">
-                            <div class="flex items-center gap-3">
-                                <span class="bg-orange-600 text-white p-2.5 rounded-xl text-sm shadow-lg">📘</span>
-                                <h3 class="text-lg font-bold text-stone-900 tracking-tight">Technical Strategy</h3>
-                            </div>
-                            <div id="pillar-impact-container" class="flex flex-col items-end">
-                                <span class="text-[9px] font-bold uppercase text-stone-400 tracking-widest mb-1">Impact Level</span>
-                                <span id="pillar-impact" class="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-orange-600 text-white tracking-widest">High</span>
-                            </div>
-                        </div>
-
-                        <div class="mb-8">
-                            <p class="text-stone-700 leading-relaxed text-lg font-normal border-l-2 border-stone-100 pl-6" id="content-desc"></p>
-                        </div>
-
-                        <div class="mt-auto senior-brief-box p-6 shadow-2xl">
-                            <h4 class="text-[10px] font-black uppercase text-orange-400 tracking-[0.2em] mb-3 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13.657 15.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zM16.464 14.95a1 1 0 10-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707z"></path></svg>
-                                Pro Interview Point
-                            </h4>
-                            <p id="pro-point" class="text-stone-300 text-sm leading-relaxed font-light italic"></p>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Cognitive Overhead Visualizer -->
-                <div class="lg:col-span-5">
-                    <section class="glass-panel rounded-2xl bg-white border border-stone-200 overflow-hidden shadow-sm h-full flex flex-col">
-                        <div class="p-6 border-b border-stone-100">
-                            <h3 class="text-sm font-bold text-stone-900 tracking-tight">Cognitive Overhead</h3>
-                            <p class="text-[12px] text-stone-500 mt-1">Implementation friction per complexity level.</p>
-                        </div>
-                        
-                        <div class="px-6 pt-10 pb-4 flex-1">
-                            <div class="chart-container">
-                                <canvas id="metricsChart"></canvas>
-                            </div>
-                        </div>
-                        
-                        <div class="p-6 bg-stone-50/50 border-t border-stone-100 flex flex-col gap-2">
-                            <div class="flex gap-2 items-center text-[12px] font-medium text-stone-700">
-                                <span id="trending-indicator" class="flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                                    Performance optimized via FP patterns
-                                </span>
-                            </div>
-                            <div class="text-[11px] text-stone-400">
-                                Measuring mental cycles relative to imperative baseline.
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
-
-            <!-- Code Comparison Section -->
-            <section class="glass-panel rounded-3xl overflow-hidden shadow-2xl border-none mb-20">
-                <!-- Toolbar -->
-                <div class="bg-stone-900 px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-6">
-                    <div class="flex items-center gap-6">
-                        <div class="flex bg-stone-800 rounded-xl p-1 shadow-inner border border-stone-700/50">
-                            <button onclick="setComplexity('easy')" id="c-easy" class="complexity-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Easy</button>
-                            <button onclick="setComplexity('medium')" id="c-medium" class="complexity-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Medium</button>
-                            <button onclick="setComplexity('hard')" id="c-hard" class="complexity-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Hard</button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-3">
-                        <span class="text-stone-500 text-[10px] font-bold uppercase tracking-widest mr-2">View Mode:</span>
-                        <div class="flex bg-stone-800 rounded-xl p-1 shadow-inner border border-stone-700/50">
-                            <button id="view-junior" onclick="setViewMode('junior')" class="view-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Junior</button>
-                            <button id="view-both" onclick="setViewMode('both')" class="view-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Compare</button>
-                            <button id="view-senior" onclick="setViewMode('senior')" class="view-btn px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all text-stone-400">Senior</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Vertical Code Stack -->
-                <div class="flex flex-col bg-[#1e1e1e] divide-y divide-stone-800" id="vertical-code-container">
-                    <!-- Junior Block -->
-                    <div id="junior-section" class="transition-all duration-300">
-                        <div class="code-header px-6 py-2 flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span>
-                                <span class="text-[10px] font-black text-rose-500/80 uppercase tracking-[0.2em]">The Junior Trap</span>
-                            </div>
-                            <span class="text-[10px] text-stone-600 font-mono">Messy / Mutable</span>
-                        </div>
-                        <div class="p-8">
-                            <pre><code id="code-junior-view" class="language-javascript"></code></pre>
-                        </div>
-                    </div>
-                    
-                    <!-- Senior Block -->
-                    <div id="senior-section" class="transition-all duration-300">
-                        <div class="code-header px-6 py-2 flex justify-between items-center bg-emerald-500/[0.02]">
-                            <div class="flex items-center gap-2">
-                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
-                                <span class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">The Senior Fix</span>
-                            </div>
-                            <span class="text-[10px] text-stone-600 font-mono">Clean / Immutable</span>
-                        </div>
-                        <div class="p-8">
-                            <pre><code id="code-senior-view" class="language-javascript"></code></pre>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Technical Rationales (Chips) -->
-                <div class="bg-white p-8 border-t border-stone-100">
-                    <h4 class="font-bold text-stone-900 text-xs uppercase tracking-[0.15em] mb-6 flex items-center gap-2">
-                        <span class="w-1.5 h-4 bg-orange-600 rounded-full"></span>
-                        Technical Rationale
-                    </h4>
-                    <div class="flex flex-wrap gap-3" id="shift-reasons">
-                        <!-- Chips injected here -->
-                    </div>
-                </div>
-            </section>
-        </div>
+    <main class="flex-1 w-full p-6 md:p-12 transition-all duration-300">
+        <div class="max-w-5xl mx-auto" id="main-content"></div>
     </main>
+
+    <footer class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-stone-200 z-50 p-4">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <button id="btn-prev" onclick="goPrev()"
+                class="px-6 py-2 rounded-xl text-sm font-bold bg-stone-100 text-stone-600 hover:bg-stone-200 disabled:opacity-30 transition-all">←
+                Prev</button>
+            <div id="slide-indicator" class="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400"></div>
+            <button id="btn-next" onclick="goNext()"
+                class="px-6 py-2 rounded-xl text-sm font-bold bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-30 transition-all">Next
+                →</button>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 
     <script>
         const masterclassData = {
-            pillars: [
+            intro: {
+                title: "Functional Programming Mastery",
+                subtitle: "Writing 'Pro-Level' Interview Code",
+                about: "In an industry obsessed with how-to, the most successful engineers are those who ask why. Dismantle the spaghetti habits of imperative programming and rebuild your mental model using the principles of functional purity. Bridge the gap between homework code and senior-level architecture by mastering code that is as elegant as it is robust."
+            },
+            topics: [
                 {
-                    id: 1,
-                    title: "The Purity Protocol",
-                    focus: "Isolating side-effects for zero-bug predictability.",
-                    desc: "At its core, this is about Referential Transparency. A function is \"pure\" if it always returns the same output for the same input and has no side effects (e.g., modifying a global variable, logging to a console, or making an API call).",
-                    proPoint: "Don't just say \"no side effects.\" Talk about isolating impurity. A senior-level architecture uses a \"Functional Core, Imperative Shell\"—where all business logic is pure, and side effects are pushed to the very edges of the application.",
-                    impact: "Critical",
-                    examples: {
-                        easy: {
-                            junior: "let total = 0;\n\nfunction add(val) {\n  total += val; // Direct mutation of global scope\n}",
-                            senior: "const add = (a, b) => a + b;\n\n// Returns a new value without touching external state\nconst total = add(5, 10);",
-                            reasons: ["Zero External Dependency", "Deterministic Output", "Pure Logic Atom"]
-                        },
-                        medium: {
-                            junior: "const user = { name: 'Rahul' };\n\nfunction rename(newName) {\n  user.name = newName; // Mutates reference directly\n}",
-                            senior: "const rename = (user, name) => ({\n  ...user, \n  name \n});\n\nconst updated = rename(user, 'Vikram');",
-                            reasons: ["Reference Stability", "State Immutability", "Referential Transparency"]
-                        },
-                        hard: {
-                            junior: "function updateConfig(key, val) {\n  window.CONFIG[key] = val;\n  logger.log('Global Config Mutated');\n}",
-                            senior: "const createUpdate = (key, val) => (config) => ({\n  ...config,\n  [key]: val\n});\n\n// Separation of 'Update Logic' from 'Execution'",
-                            reasons: ["Effect Isolation", "Lazy Evaluation", "Functional Injection"]
-                        }
+                    id: 1, title: "Pure Functions and Side Effects", focus: "Isolate state to prevent unpredictable bugs.",
+                    desc: "Functions that always produce the same output for the same input and do not modify any state outside their own scope, ensuring data consistency and isolation.",
+                    proPoint: "When asked about pure functions, don't just say 'no side effects'. Tell the interviewer you use them to make your business logic predictable and trivial to unit-test without mocking external states.",
+                    challenges: {
+                        easy: { desc: "Simple addition logic.", jr: "let total = 0;\nfunction add(n) {\n  total += n;\n  return total;\n}", sr: "const add = (a, b) => a + b;" },
+                        medium: { desc: "Applying student discounts.", jr: "let disc = 0.1;\nfunction apply(price) { return price * (1 - disc); }", sr: "const apply = (price, disc) => price * (1 - disc);" },
+                        hard: { desc: "Complex user profile update.", jr: "function update(user, marks) {\n  user.marks = marks;\n  user.updatedAt = Date.now();\n  saveToDb(user);\n}", sr: "const update = (user, marks) => ({\n  ...user,\n  marks,\n  updatedAt: Date.now()\n});" }
                     },
-                    metrics: [85, 12]
+                    metrics: { easy: [40, 10], medium: [70, 15], hard: [95, 20] }
                 },
                 {
-                    id: 2,
-                    title: "Declarative Logic",
-                    focus: "Focusing on 'What' result is needed, not 'How' to loop.",
-                    desc: "Shifting from how to do something (Imperative) to what you want to achieve (Declarative). Instead of writing for loops with counters, you use abstractions like map, filter, and reduce.",
-                    proPoint: "Mention that declarative code reduces cognitive load. When you use filter(), the reader immediately understands the intent (selection), whereas a for loop requires them to manually trace the logic to understand the goal.",
-                    impact: "High",
-                    examples: {
-                        easy: {
-                            junior: "let count = 0;\nfor(let i = 0; i < arr.length; i++) {\n  count++;\n}",
-                            senior: "const count = arr.length;",
-                            reasons: ["Semantic Intent", "Reduced Boilerplate", "No Index Errors"]
-                        },
-                        medium: {
-                            junior: "let highScorers = [];\nfor(let x of students) {\n  if(x.score > 90) highScorers.push(x);\n}",
-                            senior: "const highScorers = students.filter(s => s.score > 90);",
-                            reasons: ["Abstracted Iteration", "Method Chaining", "Self-Documenting"]
-                        },
-                        hard: {
-                            junior: "let grouped = {};\nfor(let p of products) {\n  if(!grouped[p.cat]) grouped[p.cat] = [];\n  grouped[p.cat].push(p);\n}",
-                            senior: "const grouped = products.reduce((acc, p) => ({\n  ...acc, \n  [p.cat]: [...(acc[p.cat] || []), p]\n}), {});",
-                            reasons: ["Single-Pass Reduction", "Aggregate Logic", "Object Composition"]
-                        }
+                    id: 2, title: "Declarative vs Imperative Programming", focus: "Tell the computer what you want, not how to get it.",
+                    desc: "A paradigm shift from micro-managing control flow (how to do it) to defining abstractions and desired results (what to do).",
+                    proPoint: "In an interview, mention that declarative array methods (like map/filter/reduce) drastically reduce cognitive load for whoever reads your code next, making the codebase much easier to maintain.",
+                    challenges: {
+                        easy: { desc: "Filtering numbers.", jr: "let res = [];\nfor(let i=0; i<arr.length; i++){\n  if(arr[i]>5) res.push(arr[i]);\n}", sr: "const res = arr.filter(x => x > 5);" },
+                        medium: { desc: "Extracting names from objects.", jr: "let names = [];\nfor(let s of students) {\n  names.push(s.name);\n}", sr: "const names = students.map(s => s.name);" },
+                        hard: { desc: "Calculating average of passing marks.", jr: "let sum = 0, count = 0;\nfor(let m of marks) {\n  if(m >= 40) { sum += m; count++; }\n}\nconst avg = sum / count;", sr: "const passing = marks.filter(m => m >= 40);\nconst avg = passing.reduce((s, m) => s + m, 0) / passing.length;" }
                     },
-                    metrics: [75, 15]
+                    metrics: { easy: [45, 12], medium: [65, 18], hard: [90, 22] }
                 },
                 {
-                    id: 3,
-                    title: "Currying & Closures",
-                    focus: "Designing specialized logic factories via lexical scope.",
-                    desc: "Currying transforms a multi-argument function into a sequence of unary functions. Closures allow a function to \"remember\" the environment in which it was created, even after the outer scope has closed.",
-                    proPoint: "These are the building blocks of Function Factories. You can use currying to create specialized functions from generic ones (e.g., a generic logger(level, message) becomes a pre-configured errorLogger(message)).",
-                    impact: "Medium",
-                    examples: {
-                        easy: {
-                            junior: "function multiply(a, b) {\n  return a * b;\n}",
-                            senior: "const multiply = a => b => a * b;\n\nconst double = multiply(2);\nconst result = double(5); // 10",
-                            reasons: ["Partial Application", "Logic Templating", "Parameter Locking"]
-                        },
-                        medium: {
-                            junior: "function log(level, message) {\n  console.log(`[${level}] ${message}`);\n}",
-                            senior: "const logger = level => message => \n  `[${level}] ${message}`;\n\nconst error = logger('ERROR');\nerror('System Crash');",
-                            reasons: ["Factory Pattern", "Namespace Isolation", "DRY Logic"]
-                        },
-                        hard: {
-                            junior: "async function fetchAPI(url, token, params) {\n  return await request(url, token, params);\n}",
-                            senior: "const api = token => url => async params => \n  await request(url, token, params);\n\nconst authorized = api('SECURE-TOKEN');\nconst getUser = authorized('/user');",
-                            reasons: ["Dependency Injection", "Scoped Security", "Modular Contracts"]
-                        }
+                    id: 3, title: "Closures and Currying", focus: "Functions that remember their birthplace.",
+                    desc: "Utilizing lexical scoping to remember variables from an original scope and using partial application to break complex functions into simpler, single-argument chains.",
+                    proPoint: "Explain closures as the mechanism for creating private variables in JavaScript. Mention currying as a way to build 'Function Factories'—a great architectural buzzword to drop during a system design round.",
+                    challenges: {
+                        easy: { desc: "Counter factory.", jr: "let c = 0;\nfunction inc() { return ++c; }", sr: "const createCounter = () => {\n  let c = 0;\n  return () => ++c;\n};" },
+                        medium: { desc: "Custom loggers.", jr: "function log(type, msg) {\n  console.log(`[${type}] ${msg}`);\n}", sr: "const logger = type => msg => console.log(`[${type}] ${msg}`);" },
+                        hard: { desc: "Deeply configured API client.", jr: "function req(url, auth, data) {\n  return fetch(url, { headers: { Auth: auth }, body: data });\n}", sr: "const api = url => auth => data => fetch(url, { headers: { auth }, body: data });" }
                     },
-                    metrics: [60, 22]
+                    metrics: { easy: [50, 15], medium: [75, 20], hard: [98, 28] }
                 },
                 {
-                    id: 4,
-                    title: "Composition Pipelines",
-                    focus: "Linearizing complex transformations through pipes.",
-                    desc: "This is the \"Lego-brick\" approach to coding. You take small, single-responsibility functions and chain them together using pipe() or compose() to create complex, readable transformations.",
-                    proPoint: "Pipelines turn code into a data-driven flow. It makes the logic linear and easy to read from top to bottom, avoiding the \"Pyramid of Doom\" (deeply nested function calls).",
-                    impact: "Critical",
-                    examples: {
-                        easy: {
-                            junior: "const res = exclaim(trim('  hello  '));",
-                            senior: "const pipe = (f, g) => x => g(f(x));\n\nconst process = pipe(trim, exclaim);\nprocess('  hello  ');",
-                            reasons: ["Linear Readability", "Modular Units", "No Call Nesting"]
-                        },
-                        medium: {
-                            junior: "const format = (user) => {\n  const name = user.name.trim();\n  return name.toUpperCase();\n}",
-                            senior: "const format = pipe(\n  u => u.name,\n  trim,\n  toUpper\n);\n\nformat(user);",
-                            reasons: ["Point-Free Design", "Unidirectional Flow", "Step-Wise Logic"]
-                        },
-                        hard: {
-                            junior: "function process(data) {\n  const valid = validate(data);\n  if(!valid) return null;\n  return encrypt(valid);\n}",
-                            senior: "const process = pipe(\n  validate,\n  map(encrypt), // Functor mapping\n  getOrElse(DEFAULT_STATE)\n);",
-                            reasons: ["Railway Orientation", "Safe Null Handling", "Exit Path Logic"]
-                        }
+                    id: 4, title: "Function Composition", focus: "Chain simple functions to build complex logic.",
+                    desc: "Building modular data pipelines by connecting single-purpose functions in a linear sequence, avoiding deeply nested function calls.",
+                    proPoint: "Compare nested function calls (the 'Pyramid of Doom') to functional pipelines. Tell the interviewer that pipelines create a unidirectional data flow that is incredibly easy to debug step-by-step.",
+                    challenges: {
+                        easy: { desc: "Double and Increment.", jr: "const res = inc(double(5));", sr: "const pipe = (f, g) => x => g(f(x));\nconst res = pipe(double, inc)(5);" },
+                        medium: { desc: "Clean and UpperCase.", jr: "const res = \" hello \".trim().toUpperCase();", sr: "const process = pipe(trim, upperCase);\nconst res = process(\" hello \");" },
+                        hard: { desc: "Advanced data transformation.", jr: "const res = exclaim(capitalize(slugify(title)));", sr: "const flow = (...fns) => x => fns.reduce((v, f) => f(v), x);\nconst prepare = flow(slugify, capitalize, exclaim);\nconst res = prepare(title);" }
                     },
-                    metrics: [92, 14]
+                    metrics: { easy: [55, 15], medium: [80, 20], hard: [100, 25] }
                 },
                 {
-                    id: 5,
-                    title: "Structural Sharing",
-                    focus: "Optimizing state updates without losing data history.",
-                    desc: "This is the secret sauce behind performance in immutable data structures. When you \"change\" an object, you don't copy everything; you create a new version that shares most structure with the old one.",
-                    proPoint: "This is critical for memory efficiency. It allows libraries like Immutable.js or React’s state management to perform \"Lightning Fast\" change detection by comparing memory references (old === new).",
-                    impact: "High",
-                    examples: {
-                        easy: {
-                            junior: "obj.id = 1; // Direct mutation",
-                            senior: "const newObj = { ...obj, id: 1 };",
-                            reasons: ["Change Detection", "Historical Snapshot", "Reference Safety"]
-                        },
-                        medium: {
-                            junior: "arr.push(4); // Modifies array in-place",
-                            senior: "const newArr = [...arr, 4];",
-                            reasons: ["Non-Destructive", "React Compatibility", "Predictable State"]
-                        },
-                        hard: {
-                            junior: "state.user.prefs.theme = 'dark';",
-                            senior: "const updateTheme = theme => state => ({\n  ...state,\n  user: { \n    ...state.user, \n    prefs: { ...state.user.prefs, theme } \n  }\n});",
-                            reasons: ["Deep Immutability", "Shared Memory", "Traceable Updates"]
-                        }
+                    id: 5, title: "Immutability", focus: "Never overwrite data; always create a fresh copy.",
+                    desc: "The practice of never modifying existing data structures, instead creating fresh copies for updates to ensure predictable state management and easier debugging.",
+                    proPoint: "Always tie immutability back to modern UI frameworks. Tell the interviewer that immutable state makes change detection (like in React) lightning fast because the engine only needs to check memory references.",
+                    challenges: {
+                        easy: { desc: "Update age.", jr: "user.age = 21;", sr: "const updated = { ...user, age: 21 };" },
+                        medium: { desc: "Add item to array.", jr: "list.push('new');", sr: "const next = [...list, 'new'];" },
+                        hard: { desc: "Update nested student marks.", jr: "student.scores.math = 95;\nstudent.updatedAt = now();", sr: "const updated = {\n  ...student,\n  scores: { ...student.scores, math: 95 },\n  updatedAt: now()\n};" }
                     },
-                    metrics: [55, 30]
+                    metrics: { easy: [40, 10], medium: [70, 25], hard: [95, 35] }
                 },
                 {
-                    id: 6,
-                    title: "Senior Edge",
-                    focus: "Mastering whiteboard signaling and ES6+ semantics.",
-                    desc: "This is your \"closing statement.\" It refers to using the above principles to make Illegal States Unrepresentable, ensuring that the architecture prevents entire classes of bugs by design.",
-                    proPoint: "Explain that a senior engineer's edge comes from using types and functional patterns to ensure certain bugs cannot even compile. For example, using Option/Maybe monads to force safe handling of \"missing\" data.",
-                    impact: "High",
-                    examples: {
-                        easy: {
-                            junior: "function reverse(str) {\n  let res = '';\n  for(let i=str.length-1; i>=0; i--) res += str[i];\n}",
-                            senior: "const reverse = str => [...str].reverse().join('');",
-                            reasons: ["Native Power", "Concise Intent", "Zero Manual Management"]
-                        },
-                        medium: {
-                            junior: "function uniq(arr) {\n  let res = [];\n  for(let x of arr) if(!res.includes(x)) r.push(x);\n}",
-                            senior: "const uniq = arr => [...new Set(arr)];",
-                            reasons: ["O(n) Complexity", "Data Structure Mastery", "Modern Semantics"]
-                        },
-                        hard: {
-                            junior: "function flatten(arr) {\n  let res = [];\n  arr.forEach(x => Array.isArray(x) ? res.push(...flatten(x)) : res.push(x));\n}",
-                            senior: "const flatten = arr => arr.flatMap(x => \n  Array.isArray(x) ? flatten(x) : x\n);",
-                            reasons: ["Recursive Clarity", "Built-in Iterators", "Elegant Recursion"]
-                        }
+                    id: 6, title: "Coding Best Practices for Interviews", focus: "Write code that communicates your seniority.",
+                    desc: "Employing architectural signaling and system-design thinking to demonstrate senior-level logic during technical screenings.",
+                    proPoint: "Start your whiteboard solution by explicitly stating: 'I'll use an immutable, declarative approach to prevent race conditions.' This instantly elevates you from a junior coder to an architectural thinker.",
+                    challenges: {
+                        easy: { desc: "Variable declaration.", jr: "var count = 0;", sr: "const count = 0;" },
+                        medium: { desc: "Function declaration.", jr: "function doSomething() { }", sr: "const doSomething = () => { };" },
+                        hard: { desc: "Starting a new feature.", jr: "let res = []; // Manual Loop", sr: "const transform = (data) => data.map(...);" }
                     },
-                    metrics: [45, 10]
+                    metrics: { easy: [30, 5], medium: [50, 10], hard: [85, 15] }
                 }
             ]
         };
 
-        let currentPillarId = 1;
-        let currentComplexity = 'easy';
-        let currentViewMode = 'both';
+        const pageOrder = ['intro', 1, 2, 3, 4, 5, 6];
+        let currentIndex = 0;
+        let currentDifficulty = 'easy';
+        let currentViewMode = 'junior'; // Default to junior view
         let metricsChartInstance = null;
 
-        Chart.register(ChartDataLabels);
-
-        function init() {
-            renderNav();
-            renderContent(1);
-            setViewMode('both');
-
-            // Key listener for escape key to hide Q&A
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') hideQnAScreen();
-            });
+        function toggleQnA() {
+            const overlay = document.getElementById('qna-overlay');
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
         }
 
-        function renderNav() {
-            const container = document.getElementById('nav-container');
-            masterclassData.pillars.forEach((p, idx) => {
-                const btn = document.createElement('button');
-                btn.className = 'w-full text-left px-4 py-3 text-[13px] rounded-xl transition-all flex items-center gap-3 inactive-nav group';
-                btn.id = 'nav-btn-' + p.id;
-                btn.innerHTML = `<span class="text-[10px] font-bold opacity-30 group-hover:opacity-100 transition-opacity">0${idx+1}</span> <span class="flex-1">${p.title}</span>`;
-                btn.onclick = () => {
-                    currentPillarId = p.id;
-                    updateNavStyles();
-                    renderContent(p.id);
-                };
-                container.appendChild(btn);
-            });
-            updateNavStyles();
+        function goPrev() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                currentViewMode = 'junior'; // Reset on slide switch
+                renderCurrentPage();
+            }
+        }
+        function goNext() {
+            if (currentIndex < pageOrder.length - 1) {
+                currentIndex++;
+                currentViewMode = 'junior'; // Reset on slide switch
+                renderCurrentPage();
+            }
         }
 
-        function updateNavStyles() {
-            masterclassData.pillars.forEach(p => {
-                const btn = document.getElementById('nav-btn-' + p.id);
-                btn.className = p.id === currentPillarId ? 
-                    'w-full text-left px-4 py-3 text-[13px] rounded-xl transition-all flex items-center gap-3 active-nav' : 
-                    'w-full text-left px-4 py-3 text-[13px] rounded-xl transition-all flex items-center gap-3 inactive-nav group';
-            });
+        function renderCurrentPage() {
+            const pageId = pageOrder[currentIndex];
+            const container = document.getElementById('main-content');
+            container.innerHTML = '';
+
+            if (pageId === 'intro') {
+                renderIntro(container);
+            } else {
+                renderTopic(container, pageId);
+            }
+
+            updateFooter();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function setComplexity(level) {
-            currentComplexity = level;
-            document.querySelectorAll('.complexity-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('c-' + level).classList.add('active');
-            renderContent(currentPillarId);
+        function updateFooter() {
+            const pageId = pageOrder[currentIndex];
+            document.getElementById('btn-prev').disabled = currentIndex === 0;
+            document.getElementById('btn-next').disabled = currentIndex === pageOrder.length - 1;
+            let label = pageId === 'intro' ? 'Home' : `Topic 0${pageId}`;
+            document.getElementById('slide-indicator').innerText = `${label} • ${currentIndex + 1} / ${pageOrder.length}`;
+        }
+
+        function renderIntro(container) {
+            container.innerHTML = `
+        <div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+            <h1 class="text-4xl md:text-6xl font-black text-stone-900 mb-2">${masterclassData.intro.title}</h1>
+            <p class="text-xl font-bold text-orange-600 mb-12">${masterclassData.intro.subtitle}</p>
+            <div class="max-w-2xl bg-white p-8 rounded-3xl border border-stone-200 shadow-sm">
+                <p class="text-stone-600 leading-relaxed text-lg">${masterclassData.intro.about}</p>
+            </div>
+            <button onclick="goNext()" class="mt-12 bg-stone-900 text-white px-10 py-4 rounded-2xl font-bold shadow-xl hover:bg-black transition-all">Begin Session</button>
+        </div>
+    `;
+        }
+
+        function renderTopic(container, id) {
+            const t = masterclassData.topics.find(x => x.id === id);
+            container.innerHTML = `
+        <header class="mb-8">
+            <span class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Topic 0${t.id}</span>
+            <h2 class="text-3xl md:text-5xl font-black text-stone-900 mt-4">${t.title}</h2>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+            <!-- LEFT COLUMN -->
+            <div class="lg:col-span-7 flex flex-col justify-center space-y-6">
+                <h3 class="text-xl font-bold text-orange-600">${t.focus}</h3>
+                <p class="text-stone-600 text-lg leading-relaxed">${t.desc}</p>
+                <div class="bg-orange-50 border-l-4 border-orange-500 p-5 rounded-r-xl">
+                    <h4 class="text-[10px] font-black uppercase text-orange-800 tracking-[0.2em] mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13.657 15.657a1 1 0 001.414-1.414l-.707-.707a1 1 0 10-1.414 1.414l.707.707zM16.464 14.95a1 1 0 10-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707z"></path></svg>
+                        Pro Tip
+                    </h4>
+                    <p class="text-sm text-stone-700 italic">${t.proPoint}</p>
+                </div>
+            </div>
+            
+            <!-- RIGHT COLUMN: Cognitive Load -->
+            <div class="lg:col-span-5">
+                <div class="glass-panel p-6 rounded-3xl h-full flex flex-col justify-center">
+                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4 text-center">Cognitive Load</h3>
+                    <div class="chart-container flex-1 min-h-[200px]">
+                        <canvas id="metricsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CODE DIFF -->
+        <div class="space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex gap-1 bg-stone-100 p-1 rounded-xl">
+                    <button onclick="setViewMode('junior')" id="view-junior" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${currentViewMode === 'junior' ? 'diff-btn-active' : 'diff-btn-inactive'}">Junior</button>
+                    <button onclick="setViewMode('senior')" id="view-senior" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${currentViewMode === 'senior' ? 'diff-btn-active' : 'diff-btn-inactive'}">Senior</button>
+                    <button onclick="setViewMode('compare')" id="view-compare" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${currentViewMode === 'compare' ? 'diff-btn-active' : 'diff-btn-inactive'}">Compare</button>
+                </div>
+                <div class="flex gap-1 bg-stone-100 p-1 rounded-xl">
+                    ${['easy', 'medium', 'hard'].map(l => `<button onclick="setDifficulty('${l}')" id="diff-${l}" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${currentDifficulty === l ? 'diff-btn-active' : 'diff-btn-inactive'}">${l}</button>`).join('')}
+                </div>
+            </div>
+            
+            <div id="challenge-desc" class="text-sm font-medium text-stone-600 bg-white p-3 rounded-xl border border-stone-200 shadow-sm border-l-4 border-l-orange-500"></div>
+
+            <div class="flex flex-col md:flex-row gap-4 w-full">
+                <div id="jr-wrapper" class="flex-1 min-w-0 bg-[#1e1e1e] rounded-2xl overflow-hidden shadow-xl border border-stone-800 ${currentViewMode === 'senior' ? 'hidden' : ''}">
+                    <div class="bg-stone-800/50 px-6 py-2 flex justify-between items-center border-b border-stone-700">
+                        <span class="text-red-400 text-[10px] font-black uppercase tracking-widest">Junior Trap</span>
+                    </div>
+                    <div class="p-6 overflow-x-auto"><pre><code id="jr-code" class="language-javascript"></code></pre></div>
+                </div>
+                <div id="sr-wrapper" class="flex-1 min-w-0 bg-[#252525] rounded-2xl overflow-hidden shadow-xl border border-stone-800 ${currentViewMode === 'junior' ? 'hidden' : ''}">
+                    <div class="bg-stone-800/50 px-6 py-2 flex justify-between items-center border-b border-stone-700">
+                        <span class="text-green-400 text-[10px] font-black uppercase tracking-widest">Senior Fix</span>
+                    </div>
+                    <div class="p-6 overflow-x-auto"><pre><code id="sr-code" class="language-javascript"></code></pre></div>
+                </div>
+            </div>
+        </div>
+    `;
+            updateCode(t);
+            initChart(t.metrics[currentDifficulty]);
+        }
+
+        function setDifficulty(l) {
+            currentDifficulty = l;
+
+            // Update button styles without re-rendering the whole page
+            ['easy', 'medium', 'hard'].forEach(diff => {
+                const btn = document.getElementById(`diff-${diff}`);
+                if (btn) {
+                    btn.className = `px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${diff === l ? 'diff-btn-active' : 'diff-btn-inactive'}`;
+                }
+            });
+
+            // Update only the code and chart
+            if (pageOrder[currentIndex] !== 'intro') {
+                const t = masterclassData.topics.find(x => x.id === pageOrder[currentIndex]);
+                if (t) {
+                    updateCode(t);
+                    initChart(t.metrics[currentDifficulty]);
+                }
+            }
         }
 
         function setViewMode(mode) {
             currentViewMode = mode;
-            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('view-' + mode).classList.add('active');
-            
-            const jr = document.getElementById('junior-section');
-            const sr = document.getElementById('senior-section');
+            ['junior', 'senior', 'compare'].forEach(m => {
+                const btn = document.getElementById(`view-${m}`);
+                if (btn) {
+                    btn.className = `px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${m === mode ? 'diff-btn-active' : 'diff-btn-inactive'}`;
+                }
+            });
 
-            if (mode === 'junior') {
-                jr.classList.remove('hidden');
-                sr.classList.add('hidden');
-            } else if (mode === 'senior') {
-                jr.classList.add('hidden');
-                sr.classList.remove('hidden');
-            } else {
-                jr.classList.remove('hidden');
-                sr.classList.remove('hidden');
+            const jr = document.getElementById('jr-wrapper');
+            const sr = document.getElementById('sr-wrapper');
+
+            if (jr && sr) {
+                if (mode === 'junior') {
+                    jr.classList.remove('hidden');
+                    sr.classList.add('hidden');
+                } else if (mode === 'senior') {
+                    jr.classList.add('hidden');
+                    sr.classList.remove('hidden');
+                } else {
+                    jr.classList.remove('hidden');
+                    sr.classList.remove('hidden');
+                }
             }
         }
 
-        function renderContent(id) {
-            const data = masterclassData.pillars.find(p => p.id === id);
-            const example = data.examples[currentComplexity];
+        function updateCode(t) {
+            const jr = document.getElementById('jr-code');
+            const sr = document.getElementById('sr-code');
+            const desc = document.getElementById('challenge-desc');
 
-            document.getElementById('pillar-badge').innerText = `Pillar 0${data.id}`;
-            document.getElementById('content-title').innerText = data.title;
-            document.getElementById('content-focus').innerText = data.focus;
-            document.getElementById('content-desc').innerText = data.desc;
-            document.getElementById('pro-point').innerText = data.proPoint;
+            if (desc) {
+                desc.innerHTML = `<span class="font-black text-stone-900 uppercase tracking-widest text-[10px] mr-2">Scenario:</span> ${t.challenges[currentDifficulty].desc}`;
+            }
 
-            // Pillar Meta
-            document.getElementById('pillar-impact').innerText = data.impact || 'High';
-            const impactContainer = document.getElementById('pillar-impact');
-            impactContainer.className = 'text-[10px] font-black uppercase px-2.5 py-1 rounded-lg text-white tracking-widest ' + 
-                (data.impact === 'Critical' ? 'bg-rose-600' : 'bg-orange-600');
-
-            // Update Code with Syntax Highlighting
-            const jrCode = document.getElementById('code-junior-view');
-            const srCode = document.getElementById('code-senior-view');
-            jrCode.textContent = example.junior;
-            srCode.textContent = example.senior;
-            Prism.highlightElement(jrCode);
-            Prism.highlightElement(srCode);
-
-            const reasonsContainer = document.getElementById('shift-reasons');
-            reasonsContainer.innerHTML = example.reasons.map(r => `
-                <div class="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded-full border border-orange-100 shadow-sm">
-                    <svg class="w-3 h-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                    ${r}
-                </div>
-            `).join('');
-
-            updateChart(data.metrics);
-            setViewMode(currentViewMode);
+            jr.textContent = t.challenges[currentDifficulty].jr;
+            sr.textContent = t.challenges[currentDifficulty].sr;
+            Prism.highlightElement(jr);
+            Prism.highlightElement(sr);
         }
 
-        function updateChart(metrics) {
+        function initChart(data) {
             const ctx = document.getElementById('metricsChart').getContext('2d');
-            const colorJunior = '#ef4444';
-            const colorSenior = '#10b981';
-
-            if (metricsChartInstance) {
-                metricsChartInstance.data.datasets[0].data = metrics;
-                metricsChartInstance.update();
-            } else {
-                metricsChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Junior', 'Senior'],
-                        datasets: [{ 
-                            data: metrics, 
-                            backgroundColor: [colorJunior, colorSenior], 
-                            borderRadius: 8,
-                            barThickness: 50,
-                            borderSkipped: false
-                        }]
-                    },
-                    options: {
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        animation: {
-                            duration: 800,
-                            easing: 'easeOutQuart'
-                        },
-                        layout: { padding: { top: 30 } },
-                        scales: { 
-                            y: { 
-                                display: true, 
-                                max: 110,
-                                grid: { display: true, drawBorder: false, color: 'rgba(231, 229, 228, 0.4)' },
-                                border: { display: false },
-                                ticks: { display: false }
-                            }, 
-                            x: { 
-                                grid: { display: false }, 
-                                border: { display: false },
-                                ticks: { font: { family: 'Inter', weight: '600', size: 12 }, color: '#78716c', padding: 10 } 
-                            } 
-                        },
-                        plugins: { 
-                            legend: { display: false },
-                            datalabels: {
-                                anchor: 'end', align: 'top', offset: 8, color: '#1c1917',
-                                font: { family: 'Inter', weight: 'bold', size: 13 },
-                                formatter: (value) => value + '%'
-                            },
-                            tooltip: {
-                                enabled: true,
-                                backgroundColor: '#ffffff',
-                                titleColor: '#1c1917',
-                                bodyColor: '#57534e',
-                                borderColor: '#e7e5e4',
-                                borderWidth: 1,
-                                titleFont: { size: 13, family: 'Inter', weight: 'bold' },
-                                bodyFont: { size: 12, family: 'Inter' },
-                                padding: 12,
-                                cornerRadius: 8,
-                                displayColors: false,
-                                shadowBlur: 10,
-                                shadowColor: 'rgba(0,0,0,0.1)',
-                                callbacks: {
-                                    title: (items) => items[0].label + ' Approach',
-                                    label: (context) => `Overhead: ${context.raw}%`
-                                }
-                            }
-                        }
-                    }
-                });
-            }
+            if (metricsChartInstance) metricsChartInstance.destroy();
+            metricsChartInstance = new Chart(ctx, {
+                type: 'bar', data: { labels: ['Jr', 'Sr'], datasets: [{ data: data, backgroundColor: ['#f87171', '#4ade80'], borderRadius: 4, barThickness: 60 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100, display: false }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+            });
         }
 
-        function showQnAScreen() { document.getElementById('qna-overlay').style.display = 'flex'; }
-        function hideQnAScreen() { document.getElementById('qna-overlay').style.display = 'none'; }
-
-        window.onload = init;
+        window.onload = () => { renderCurrentPage(); };
     </script>
 </body>
+
 </html>
